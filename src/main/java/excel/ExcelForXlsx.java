@@ -1,6 +1,7 @@
 package excel;
 
 
+import common.WriteMode;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import api.AbstractExcel;
 
@@ -12,8 +13,12 @@ import java.io.InputStream;
  */
 public class ExcelForXlsx extends AbstractExcel {
 
-    public ExcelForXlsx(File xlsx) {
-        super.excel = xlsx;
+    public ExcelForXlsx(File excel) {
+        super(excel);
+    }
+
+    public ExcelForXlsx(File excel, WriteMode mode) {
+        super(excel, mode);
     }
 
     @Override

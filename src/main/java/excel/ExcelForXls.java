@@ -1,6 +1,7 @@
 package excel;
 
 
+import common.WriteMode;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import api.AbstractExcel;
 
@@ -12,12 +13,12 @@ import java.io.InputStream;
  */
 public class ExcelForXls extends AbstractExcel {
 
-    /**
-     * 创建Excel，读写分开创建对象
-     * @param xls 读取或保存到的文件
-     */
-    public ExcelForXls(File xls) {
-        super.excel = xls;
+    public ExcelForXls(File excel) {
+        super(excel);
+    }
+
+    public ExcelForXls(File excel, WriteMode mode) {
+        super(excel, mode);
     }
 
     @Override

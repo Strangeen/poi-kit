@@ -1,5 +1,6 @@
 package api;
 
+import common.WriteMode;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
@@ -24,8 +25,39 @@ public abstract class AbstractExcel {
     protected Workbook wb;
     protected Sheet sheet;
 
+    protected WriteMode mode;
+
     // 缓存Row
     private HashMap<Integer, Row> rowHashMap = new HashMap<Integer, Row>();
+
+
+    /**
+     * 导出模式为默认的覆盖 C
+     */
+    public AbstractExcel(File excel) {
+        this.excel = excel;
+        this.mode = WriteMode.C;
+    }
+
+    /**
+     * 自定义导出模式
+     * @param excel 导出的文件
+     * @param mode 模式，如：创建sheet是覆盖文件uo
+     *             C - 覆盖
+     *             I - 插入
+     */
+    public AbstractExcel(File excel, WriteMode mode) {
+        this.excel = excel;
+        this.mode = mode;
+    }
+
+    public void setMode(WriteMode mode) {
+        this.mode = mode;
+    }
+
+    public void setExcel(File excel) {
+        this.excel = excel;
+    }
 
 
     // ----------- 读取excel部分 ------------
@@ -162,8 +194,17 @@ public abstract class AbstractExcel {
      */
     public void writeExcel(List<List<String>> dataTDList, String sheetName, boolean autoClose) {
         try {
-            if (this.wb == null)
-                createWorkbook();
+            if (wb == null) {
+                if (mode == WriteMode.C) {
+                    createWorkbook();
+                } else if (mode == WriteMode.I) {
+                    // 读取文件的wb作为要写入的wb
+                    this.fis = new FileInputStream(excel);
+                    readWorkbook(fis);
+                } else {
+                    throw new RuntimeException("导出模式设置错误");
+                }
+            }
 
             if (sheetName == null || sheetName.length() < 1 || sheetName.length() > 31)
                 this.sheet = wb.createSheet();
@@ -193,6 +234,7 @@ public abstract class AbstractExcel {
             // 写入文件在close()中调用
 
         } catch (Exception e) {
+            close();
             throw new RuntimeException(e);
         } finally {
             if (autoClose) {

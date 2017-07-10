@@ -1,10 +1,12 @@
 package excel;
 
+import common.WriteMode;
 import org.junit.Test;
 import api.AbstractExcel;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,19 +27,32 @@ public class TestExcel {
     }
 
     @Test
-    public void testWriteExcel() throws InterruptedException {
+    public void testCoverWriteExcel() throws InterruptedException {
         AbstractExcel e = new ExcelForXls(new File("D:/test/test_out.xls"));
         writeExcel(e);
     }
 
     @Test
-    public void testWriteExcelForXlsx() throws InterruptedException {
+    public void testCoverWriteExcelForXlsx() throws InterruptedException {
         AbstractExcel e = new ExcelForXlsx(new File("D:/test/test_out.xlsx"));
         writeExcel(e);
     }
 
 
-    private void writeExcel(AbstractExcel e) {
+    @Test
+    public void testInsertWriteExcel() throws InterruptedException {
+        AbstractExcel e = new ExcelForXls(new File("D:/test/test_out_insert.xls"), WriteMode.I);
+        writeExcel(e);
+    }
+
+    @Test
+    public void testInsertWriteExcelForXlsx() throws InterruptedException {
+        AbstractExcel e = new ExcelForXlsx(new File("D:/test/test_out_insert.xlsx"), WriteMode.I);
+        writeExcel(e);
+    }
+
+
+    private void writeExcel(AbstractExcel e) throws InterruptedException {
         // 测试数据
         List<List<String>> dataTDList = new ArrayList<List<String>>();
         List<String> titleNameList = new ArrayList<String>();
@@ -53,8 +68,6 @@ public class TestExcel {
                 valueList.add(String.valueOf(i + j));
             }
         }
-        e.writeExcel(dataTDList, "a", false);
-
         List<List<String>> dataTDList2 = new ArrayList<List<String>>();
         for (int i = 9; i < 20; i ++) {
             List<String> valueList = new ArrayList<String>();
@@ -67,6 +80,8 @@ public class TestExcel {
                 valueList.add(String.valueOf(i + j));
             }
         }
+
+        e.writeExcel(dataTDList, "a_" + new Date().getTime(), false);
         e.writeExcel(dataTDList2, "", true);
 
         //Thread.sleep(30000); // 测试流是否被关闭
