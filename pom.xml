@@ -6,7 +6,7 @@
 
     <groupId>online.dinghuiye</groupId>
     <artifactId>poi-kit</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <version>1.0.0</version>
 
     <dependencies>
