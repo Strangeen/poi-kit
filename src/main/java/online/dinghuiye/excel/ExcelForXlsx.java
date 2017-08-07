@@ -1,9 +1,9 @@
-package excel;
+package online.dinghuiye.excel;
 
 
-import common.WriteMode;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import api.AbstractExcel;
+import online.dinghuiye.common.WriteMode;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import online.dinghuiye.api.AbstractExcel;
 
 import java.io.File;
 import java.io.InputStream;
@@ -11,20 +11,20 @@ import java.io.InputStream;
 /**
  * Created by Strangeen on 2017/7/5.
  */
-public class ExcelForXls extends AbstractExcel {
+public class ExcelForXlsx extends AbstractExcel {
 
-    public ExcelForXls(File excel) {
+    public ExcelForXlsx(File excel) {
         super(excel);
     }
 
-    public ExcelForXls(File excel, WriteMode mode) {
+    public ExcelForXlsx(File excel, WriteMode mode) {
         super(excel, mode);
     }
 
     @Override
     protected void readWorkbook(InputStream fis) {
         try {
-            this.wb = new HSSFWorkbook(fis);
+            this.wb = new XSSFWorkbook(fis);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -33,7 +33,7 @@ public class ExcelForXls extends AbstractExcel {
     @Override
     protected void createWorkbook() {
         try {
-            this.wb = new HSSFWorkbook();
+            this.wb = new XSSFWorkbook();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

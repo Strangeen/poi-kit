@@ -1,6 +1,6 @@
-package api;
+package online.dinghuiye.api;
 
-import common.WriteMode;
+import online.dinghuiye.common.WriteMode;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
@@ -42,7 +42,7 @@ public abstract class AbstractExcel {
     /**
      * 自定义导出模式
      * @param excel 导出的文件
-     * @param mode 模式，如：创建sheet是覆盖文件uo
+     * @param mode 模式，如：创建sheet是覆盖文件还是在同文件中插入sheet
      *             C - 覆盖
      *             I - 插入
      */
@@ -63,9 +63,9 @@ public abstract class AbstractExcel {
     // ----------- 读取excel部分 ------------
 
     /**
-     * 将excel的按行数据转换为Map<表头名，值>映射
+     * 将excel的按行数据转换为Map<表头名, 值>映射
      * @param sheetNo 读取sheet的编号
-     * @return
+     * @return Map<表头名, 值>的List
      */
     public List<Map<String, String>> readExcel(int sheetNo) {
 

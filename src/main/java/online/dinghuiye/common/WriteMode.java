@@ -1,4 +1,4 @@
-package common;
+package online.dinghuiye.common;
 
 /**
  * Created by Strangeen on 2017/7/10.

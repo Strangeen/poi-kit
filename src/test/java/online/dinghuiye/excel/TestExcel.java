@@ -1,8 +1,8 @@
-package excel;
+package online.dinghuiye.excel;
 
-import common.WriteMode;
+import online.dinghuiye.common.WriteMode;
 import org.junit.Test;
-import api.AbstractExcel;
+import online.dinghuiye.api.AbstractExcel;
 
 import java.io.File;
 import java.util.ArrayList;
