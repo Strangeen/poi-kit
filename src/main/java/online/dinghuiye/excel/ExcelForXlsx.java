@@ -9,7 +9,10 @@ import java.io.File;
 import java.io.InputStream;
 
 /**
- * Created by Strangeen on 2017/7/5.
+ * 创建.xlsx的{@link AbstractExcel}
+ *
+ * @author Strangeen
+ * on 2017/7/5
  */
 public class ExcelForXlsx extends AbstractExcel {
 

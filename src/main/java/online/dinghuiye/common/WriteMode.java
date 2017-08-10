@@ -1,21 +1,20 @@
 package online.dinghuiye.common;
 
 /**
- * Created by Strangeen on 2017/7/10.
+ * 导出excel的写入模式
  *
- * 导出excel的写入模式，I - 插入，C - 覆盖
+ * @author Strangeen
+ * on 2017/7/10
  */
 public enum WriteMode {
 
-    I("insert"), C("cover");
+    /**
+     * 插入模式
+     */
+    INSERT,
+    /**
+     * 覆盖模式
+     */
+    COVER
 
-    private String modeName;
-
-    WriteMode(String modeName) {
-        this.modeName = modeName;
-    }
-
-    public String getModeName() {
-        return modeName;
-    }
 }

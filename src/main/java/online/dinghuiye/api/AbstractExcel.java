@@ -10,50 +10,57 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Strangeen on 2017/7/6.
- *
  * poi版本3.16
  * 导入和导出分别创建AbstractExcel对象
+ *
+ * @apiNote
+ *  <p>poi版本3.16</p>
+ *  <p>excel单元格类型按照{@link CellType}进行判断，{@link CellType#FORMULA}格式获取为公式计算后的值</p>
+ *
+ * @author Strangeen
+ * on 2017/7/6
  */
 public abstract class AbstractExcel {
 
     protected File excel;
-    protected InputStream fis;
+    private InputStream fis;
     private OutputStream fos;
-    protected List<String> titleNameList;
+    private List<String> titleNameList;
 
     protected Workbook wb;
-    protected Sheet sheet;
+    private Sheet sheet;
 
-    protected WriteMode mode;
+    private WriteMode mode;
+
+    private FormulaEvaluator evaluator;
 
     // 缓存Row
-    private HashMap<Integer, Row> rowHashMap = new HashMap<Integer, Row>();
+    private HashMap<Integer, Row> rowHashMap = new HashMap<>();
 
 
     /**
-     * 导出模式为默认的覆盖 C
+     * 导出模式为默认的覆盖 COVER
      */
     public AbstractExcel(File excel) {
         this.excel = excel;
-        this.mode = WriteMode.C;
+        this.mode = WriteMode.COVER;
     }
 
     /**
      * 自定义导出模式
      * @param excel 导出的文件
      * @param mode 模式，如：创建sheet是覆盖文件还是在同文件中插入sheet
-     *             C - 覆盖
-     *             I - 插入
+     *             COVER - 覆盖
+     *             INSERT - 插入
      */
     public AbstractExcel(File excel, WriteMode mode) {
         this.excel = excel;
         this.mode = mode;
     }
 
-    public void setMode(WriteMode mode) {
-        this.mode = mode;
-    }
+//    public void setMode(WriteMode mode) {
+//        this.mode = mode;
+//    }
 
     public void setExcel(File excel) {
         this.excel = excel;
@@ -62,12 +69,14 @@ public abstract class AbstractExcel {
 
     // ----------- 读取excel部分 ------------
 
-    /**
+    /*
      * 将excel的按行数据转换为Map<表头名, 值>映射
      * @param sheetNo 读取sheet的编号
      * @return Map<表头名, 值>的List
+     * @deprecated 读取单元格方法已替换为
+     *               {@link AbstractExcel#readCellToObj(int, int)}
      */
-    public List<Map<String, String>> readExcel(int sheetNo) {
+    /*public List<Map<String, String>> readExcel(int sheetNo) {
 
         try {
             List<Map<String, String>> recordMapList = new ArrayList<Map<String, String>>();
@@ -78,6 +87,37 @@ public abstract class AbstractExcel {
 
                 for (int colNo = 0; colNo < titleNameList.size(); colNo++) {
                     String value = readCell(rowNo, colNo);
+                    recordMap.put(titleNameList.get(colNo), value);
+                }
+                recordMapList.add(recordMap);
+            }
+
+            return recordMapList;
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            close();
+        }
+    }*/
+
+
+    /**
+     * 读取excel
+     * @param sheetNo sheet编号
+     * @return 每行数据的 表头名称，值 映射
+     */
+    public List<Map<String, Object>> readExcel(int sheetNo) {
+
+        try {
+            List<Map<String, Object>> recordMapList = new ArrayList<>();
+            open(excel, sheetNo);
+            int totalRowNum = getTotalRowNum();
+            for (int rowNo = 1; rowNo < totalRowNum; rowNo++) {
+                Map<String, Object> recordMap = new HashMap<>();
+
+                for (int colNo = 0; colNo < titleNameList.size(); colNo++) {
+                    Object value = readCellToObj(rowNo, colNo);
                     recordMap.put(titleNameList.get(colNo), value);
                 }
                 recordMapList.add(recordMap);
@@ -106,6 +146,7 @@ public abstract class AbstractExcel {
         try {
             this.fis = new FileInputStream(excelFile);
             readWorkbook(fis);
+            this.evaluator = wb.getCreationHelper().createFormulaEvaluator(); // 设置公式计算器
             readSheet(sheetNo);
             readSheetTitleNameList();
         } catch (Exception e) {
@@ -129,15 +170,21 @@ public abstract class AbstractExcel {
     private void readSheetTitleNameList() {
         int firstRowNo = 0;
         Row firstRow = sheet.getRow(firstRowNo);
-        this.titleNameList = new ArrayList<String>();
+        this.titleNameList = new ArrayList<>();
         if (firstRow != null) {
             for (int colNo = 0; colNo < firstRow.getPhysicalNumberOfCells(); colNo ++) {
-                titleNameList.add(readCell(firstRowNo, colNo));
+                titleNameList.add(readCellToString(firstRowNo, colNo));
             }
         }
     }
 
-    private String readCell(int rowNo, int colNo) {
+    /**
+     * 读取sheet表头单元格，值类型均为字符串类型
+     * @param rowNo 行号
+     * @param colNo 列号
+     * @return 单元格值
+     */
+    private String readCellToString(int rowNo, int colNo) {
         Row row = rowHashMap.get(rowNo);
         if (row == null) {
             row = sheet.getRow(rowNo);
@@ -149,7 +196,64 @@ public abstract class AbstractExcel {
         return cell.getStringCellValue();
     }
 
-    public void close() {
+    /**
+     * 读取数据单元格，值类型为对应的对象类型，
+     * 其中{@link CellType#FORMULA}的值为公式计算结果值对象
+     * @param rowNo 行号
+     * @param colNo 列号
+     * @return 单元格值对应单元格类型的对象
+     */
+    private Object readCellToObj(int rowNo, int colNo) {
+        try {
+            Row row = rowHashMap.get(rowNo);
+            if (row == null) {
+                row = sheet.getRow(rowNo);
+                rowHashMap.put(rowNo, row);
+            }
+            Cell cell = row.getCell(colNo);
+            return getCellValueAccordCellType(cell, cell.getCellTypeEnum());
+        } catch (Exception e) {
+            throw new RuntimeException("类型错误, 行：" + rowNo + "，列：" + colNo, e);
+        }
+    }
+
+    /**
+     * <p>根据{@link CellType}获取单元格的值</p>
+     * <p>特殊的公式格式，先转换为计算结果的类型，再递归获得计算值</p>
+     * @param cell 单元格
+     * @param type 单元格类型
+     * @return 单元格值对应单元格类型的对象
+     */
+    private Object getCellValueAccordCellType(Cell cell, CellType type) {
+        if (cell == null) return null;
+        Object cellValue;
+        switch (type) {
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell))
+                    cellValue = cell.getDateCellValue();
+                else
+                    cellValue = cell.getNumericCellValue();
+                break;
+            case FORMULA:
+                cellValue = getCellValueAccordCellType(cell, evaluator.evaluateFormulaCellEnum(cell));
+                break;
+            case BLANK:
+                cellValue = "";
+                break;
+            case BOOLEAN:
+                cellValue = cell.getBooleanCellValue();
+                break;
+            case ERROR:
+                throw new RuntimeException("类型错误");
+            default:
+                cell.setCellType(CellType.STRING);
+                cellValue = cell.getStringCellValue();
+        }
+        return cellValue;
+    }
+
+
+    private void close() {
         try {
             if (wb != null && fos != null)
                 // 因为代码结构问题，将wb写入excel在close里执行，
@@ -195,9 +299,9 @@ public abstract class AbstractExcel {
     public void writeExcel(List<List<String>> dataTDList, String sheetName, boolean autoClose) {
         try {
             if (wb == null) {
-                if (mode == WriteMode.C) {
+                if (mode == WriteMode.COVER) {
                     createWorkbook();
-                } else if (mode == WriteMode.I) {
+                } else if (mode == WriteMode.INSERT) {
                     // 读取文件的wb作为要写入的wb
                     this.fis = new FileInputStream(excel);
                     readWorkbook(fis);
@@ -212,9 +316,9 @@ public abstract class AbstractExcel {
                 this.sheet = wb.createSheet(sheetName);
             }
 
-            if (dataTDList.size() <= 0) {
-                //throw new RuntimeException("没有数据，无法写入excel");
-            }
+//            if (dataTDList.size() <= 0) {
+//                throw new RuntimeException("没有数据，无法写入excel");
+//            }
 
             // 清空row缓存
             rowHashMap.clear();
