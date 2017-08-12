@@ -48,6 +48,7 @@ public abstract class AbstractExcel {
 
     /**
      * 自定义导出模式
+     *
      * @param excel 导出的文件
      * @param mode 模式，如：创建sheet是覆盖文件还是在同文件中插入sheet
      *             COVER - 覆盖
@@ -104,6 +105,7 @@ public abstract class AbstractExcel {
 
     /**
      * 读取excel
+     *
      * @param sheetNo sheet编号
      * @return 每行数据的 表头名称，值 映射
      */
@@ -134,12 +136,14 @@ public abstract class AbstractExcel {
 
     /**
      * 根据不同的excel类型来创建不同的wb
+     *
      * @param fis 文件流
      */
     protected abstract void readWorkbook(InputStream fis);
 
     /**
      * 打开excel文件，默认选中第一个sheet
+     *
      * @param excelFile xlsx文件
      */
     private void open(File excelFile, int sheetNo) {
@@ -180,6 +184,7 @@ public abstract class AbstractExcel {
 
     /**
      * 读取sheet表头单元格，值类型均为字符串类型
+     *
      * @param rowNo 行号
      * @param colNo 列号
      * @return 单元格值
@@ -197,8 +202,9 @@ public abstract class AbstractExcel {
     }
 
     /**
-     * 读取数据单元格，值类型为对应的对象类型，
-     * 其中{@link CellType#FORMULA}的值为公式计算结果值对象
+     * <p>读取数据单元格，值类型为对应的对象类型，
+     * 公式类型{@link CellType#FORMULA}单元格的值为公式计算结果值</p>
+     *
      * @param rowNo 行号
      * @param colNo 列号
      * @return 单元格值对应单元格类型的对象
@@ -210,32 +216,40 @@ public abstract class AbstractExcel {
                 row = sheet.getRow(rowNo);
                 rowHashMap.put(rowNo, row);
             }
+            if (row == null) return null; // 从sheet中重新获取依然为null，那么返回null
             Cell cell = row.getCell(colNo);
-            return getCellValueAccordCellType(cell, cell.getCellTypeEnum());
+            if (cell == null) return null;
+            return getCellValueAccordCellType(cell);
         } catch (Exception e) {
-            throw new RuntimeException("类型错误, 行：" + rowNo + "，列：" + colNo, e);
+            throw new RuntimeException("类型错误, 行：" + (rowNo + 1) + "，列：" + (colNo + 1), e);
         }
     }
 
     /**
      * <p>根据{@link CellType}获取单元格的值</p>
      * <p>特殊的公式格式，先转换为计算结果的类型，再递归获得计算值</p>
+     *
      * @param cell 单元格
-     * @param type 单元格类型
      * @return 单元格值对应单元格类型的对象
      */
-    private Object getCellValueAccordCellType(Cell cell, CellType type) {
+    private Object getCellValueAccordCellType(Cell cell) {
         if (cell == null) return null;
+        CellValue cellValueCell = evaluator.evaluate(cell);
+        if (cellValueCell == null) return null;
         Object cellValue;
-        switch (type) {
+        switch (cellValueCell.getCellTypeEnum()) {
             case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell))
+                if (DateUtil.isCellDateFormatted(cell)) {
                     cellValue = cell.getDateCellValue();
-                else
+                }
+                else {
                     cellValue = cell.getNumericCellValue();
-                break;
-            case FORMULA:
-                cellValue = getCellValueAccordCellType(cell, evaluator.evaluateFormulaCellEnum(cell));
+                    // 判断long还是double
+                    cell.setCellType(CellType.STRING);
+                    String cellStrValue = cell.getStringCellValue();
+                    if (cellStrValue != null && !cellStrValue.contains(".")) // Long
+                        cellValue = ((Double) cellValue).longValue();
+                }
                 break;
             case BLANK:
                 cellValue = "";
@@ -243,6 +257,9 @@ public abstract class AbstractExcel {
             case BOOLEAN:
                 cellValue = cell.getBooleanCellValue();
                 break;
+            case FORMULA:
+                throw new RuntimeException("formula is impossible");
+                //cellValue = getCellValueAccordCellType(cell, evaluator.evaluate(cell).getCellTypeEnum());
             case ERROR:
                 throw new RuntimeException("类型错误");
             default:
@@ -286,6 +303,7 @@ public abstract class AbstractExcel {
 
     /**
      * 将数据写到excel中
+     *
      * @param dataTDList 表格数据，按行列存入
      *                      如：第一个元素是表头名称List
      *                      后面的元素为数据List，顺序按表头名称顺序

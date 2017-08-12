@@ -64,9 +64,10 @@ public class TestExcel {
 
         List<Object> expect = Arrays.asList(new Object[]{
                 new SimpleDateFormat("yyyy-MM-dd").parse("1970-1-2"),
-                2.0, 123.0, 1.23, 11.0, 137.23000000000002, 666.0, "ab137.23"
+                2L, 123L, 1.23, 11L, 137.23000000000002, 666L, "ab137.23", 1.11111111111111E45
         });
 
+        System.out.println(actual);
         IntStream.range(0,expect.size()).forEach(i -> Assert.assertEquals(expect.get(i), actual.get(i)));
     }
 
@@ -132,4 +133,7 @@ public class TestExcel {
 
         //Thread.sleep(30000); // 测试流是否被关闭
     }
+
+
+    // TODO:测试所有单元格格式类型的读取
 }
