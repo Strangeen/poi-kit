@@ -307,7 +307,7 @@ public abstract class AbstractExcel {
      * @param dataTDList 表格数据，按行列存入
      *                      如：第一个元素是表头名称List
      *                      后面的元素为数据List，顺序按表头名称顺序
-     * @param sheetName sheet名称，null按默认名称Sheet0...
+     * @param sheetName sheet名称，null或空串或字数小于1大于31，均按默认名称Sheet0...
      * @param autoClose true 将wb写入excel文件，并自动关闭文件
      *                  false 手动关闭文件，注意：此时并没有将wb写入excel文件
      *                      可以手动调用close()方法将wb写入excel文件
